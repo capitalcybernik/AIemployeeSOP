@@ -29,6 +29,7 @@ Standard Operating Procedures for building, deploying, and managing AI Employees
 ## Quick Links
 
 - [Client Onboarding Checklist](01-onboarding/checklist.md)
+- [Mission Control Setup](02-build/mission-control-setup.md)
 - [Tier 1 Build Guide](02-build/tier1-standard.md)
 - [Tier 2 Build Guide](02-build/tier2-pro.md)
 - [Security Hardening](03-security/hardening-checklist.md)
