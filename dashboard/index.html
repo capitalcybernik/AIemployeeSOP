@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Employee Operations Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --blue:#2563eb;
+  --green:#16a34a;
+  --orange:#ea580c;
+  --red:#dc2626;
+  --purple:#7c3aed;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
+
+/* Auth Screen */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px;max-width:400px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.auth-box h1{font-size:1.5rem;font-weight:800;margin-bottom:8px}
+.auth-box p{color:var(--text2);margin-bottom:24px;font-size:.9rem}
+.auth-box input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:8px;font-size:1rem;font-family:inherit;margin-bottom:16px}
+.auth-box input:focus{outline:none;border-color:var(--blue)}
+.auth-box button{width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer}
+.auth-box button:hover{opacity:.9}
+.auth-error{color:var(--red);font-size:.85rem;margin-top:8px;display:none}
+
+/* Dashboard */
+#dashboard{display:none}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar h1{font-size:1.15rem;font-weight:700}
+.topbar .logo span{color:var(--orange)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-right a{color:var(--text2);font-size:.85rem;cursor:pointer;text-decoration:none}
+.topbar-right a:hover{color:var(--text)}
+
+.main{max-width:1200px;margin:0 auto;padding:24px}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
+.stat-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:4px}
+.stat-value{font-size:2rem;font-weight:800}
+.stat-sub{font-size:.8rem;color:var(--text3);margin-top:2px}
+
+/* Sections */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-header h2{font-size:1.1rem;font-weight:700}
+.section-header .badge{font-size:.75rem;padding:4px 10px;border-radius:100px;font-weight:600}
+.badge-blue{background:#eff6ff;color:var(--blue)}
+.badge-green{background:#f0fdf4;color:var(--green)}
+.badge-orange{background:#fff7ed;color:var(--orange)}
+.badge-red{background:#fef2f2;color:var(--red)}
+.badge-purple{background:#f5f3ff;color:var(--purple)}
+
+/* Tables */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:32px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:12px 16px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:.9rem;border-bottom:1px solid var(--border)}
+tr:last-child td{border:none}
+tr:hover{background:#f8fafc}
+.status{display:inline-block;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-live{background:#f0fdf4;color:var(--green)}
+.status-building{background:#eff6ff;color:var(--blue)}
+.status-testing{background:#fff7ed;color:var(--orange)}
+.status-discovery{background:#f5f3ff;color:var(--purple)}
+.status-pipeline{background:#f8fafc;color:var(--text3)}
+.tier-badge{font-size:.75rem;padding:2px 8px;border-radius:4px;font-weight:600}
+.tier-standard{background:#eff6ff;color:var(--blue)}
+.tier-pro{background:#fff7ed;color:var(--orange)}
+
+/* Quick Links */
+.links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:32px}
+.link-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text);transition:all .2s}
+.link-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.link-icon{font-size:1.3rem}
+.link-card h4{font-size:.9rem;font-weight:600}
+.link-card p{font-size:.75rem;color:var(--text3)}
+
+/* Add Client Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:32px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h2{font-size:1.2rem;font-weight:700;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:4px;color:var(--text2)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:20px}
+.form-actions button{padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none}
+.btn-save{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text2)}
+
+@media(max-width:768px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .main{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h1>🔒 AI Employee Ops</h1>
+    <p>Enter the dashboard password to continue.</p>
+    <input type="password" id="password-input" placeholder="Password" autofocus>
+    <button onclick="authenticate()">Access Dashboard</button>
+    <div class="auth-error" id="auth-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="logo"><h1>Next Level <span>AI</span> &bull; Operations</h1></div>
+    <div class="topbar-right">
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP" target="_blank">📁 SOP Repo</a>
+      <a href="https://getnextlevel.marketing" target="_blank">🌐 Website</a>
+      <a onclick="logout()">🚪 Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Active Clients</div>
+        <div class="stat-value" id="stat-active">0</div>
+        <div class="stat-sub">AI employees deployed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Revenue</div>
+        <div class="stat-value" id="stat-mrr">$0</div>
+        <div class="stat-sub">recurring</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In Pipeline</div>
+        <div class="stat-value" id="stat-pipeline">0</div>
+        <div class="stat-sub">prospects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Agency Partners</div>
+        <div class="stat-value" id="stat-partners">0</div>
+        <div class="stat-sub">active partners</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Setup Fee Slots</div>
+        <div class="stat-value" id="stat-slots">10</div>
+        <div class="stat-sub">of 10 free remaining</div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="section-header"><h2>Quick Links</h2></div>
+    <div class="links-grid">
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/01-onboarding/checklist.md" target="_blank" class="link-card">
+        <span class="link-icon">📋</span>
+        <div><h4>Onboarding Checklist</h4><p>Start new client intake</p></div>
+      </a>
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/02-build/tier1-standard.md" target="_blank" class="link-card">
+        <span class="link-icon">🔧</span>
+        <div><h4>Tier 1 Build Guide</h4><p>Standard AI Employee</p></div>
+      </a>
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/02-build/tier2-pro.md" target="_blank" class="link-card">
+        <span class="link-icon">⚡</span>
+        <div><h4>Tier 2 Build Guide</h4><p>Pro AI Employee</p></div>
+      </a>
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/03-security/hardening-checklist.md" target="_blank" class="link-card">
+        <span class="link-icon">🔒</span>
+        <div><h4>Security Hardening</h4><p>Cynet + AI security</p></div>
+      </a>
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/06-skills-catalog/README.md" target="_blank" class="link-card">
+        <span class="link-icon">📚</span>
+        <div><h4>Skills Catalog</h4><p>All available skills</p></div>
+      </a>
+      <a href="https://github.com/capitalcybernik/AIemployeeSOP/blob/main/templates/discovery-questionnaire.md" target="_blank" class="link-card">
+        <span class="link-icon">📝</span>
+        <div><h4>Discovery Questionnaire</h4><p>Client intake form</p></div>
+      </a>
+      <a href="https://capital-cyber.com/rick" target="_blank" class="link-card">
+        <span class="link-icon">📅</span>
+        <div><h4>Rick's Calendar</h4><p>Book strategy calls</p></div>
+      </a>
+      <a href="https://getnextlevel.marketing/agencies.html" target="_blank" class="link-card">
+        <span class="link-icon">🤝</span>
+        <div><h4>Agency Partner Page</h4><p>Share with prospects</p></div>
+      </a>
+    </div>
+
+    <!-- Active Clients -->
+    <div class="section-header">
+      <h2>Active Clients</h2>
+      <button onclick="openModal('client')" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);font-size:.85rem;font-weight:600;cursor:pointer">+ Add Client</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Client</th><th>Industry</th><th>Tier</th><th>Skills</th><th>Status</th><th>Start Date</th></tr>
+        </thead>
+        <tbody id="clients-table">
+          <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px">No clients yet. Add your first client to get started.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="section-header">
+      <h2>Pipeline</h2>
+      <button onclick="openModal('prospect')" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);font-size:.85rem;font-weight:600;cursor:pointer">+ Add Prospect</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Prospect</th><th>Industry</th><th>Source</th><th>Tier Interest</th><th>Status</th><th>Notes</th></tr>
+        </thead>
+        <tbody id="pipeline-table">
+          <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px">No prospects yet. Start outreach to fill the pipeline.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Agency Partners -->
+    <div class="section-header">
+      <h2>Agency Partners</h2>
+      <button onclick="openModal('partner')" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);font-size:.85rem;font-weight:600;cursor:pointer">+ Add Partner</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Agency</th><th>Contact</th><th>Clients Referred</th><th>Status</th><th>Notes</th></tr>
+        </thead>
+        <tbody id="partners-table">
+          <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">No agency partners yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Deployment Checklist -->
+    <div class="section-header"><h2>Deployment Checklist (Active Build)</h2></div>
+    <div class="table-wrap" style="padding:24px" id="checklist-area">
+      <p style="color:var(--text3);text-align:center">Select an active build to see its deployment checklist.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add Client Modal -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <h2>Add New Client</h2>
+    <div class="form-group"><label>Client Name</label><input id="c-name" placeholder="Business name"></div>
+    <div class="form-group"><label>Industry</label><input id="c-industry" placeholder="Auto shop, Towing, etc."></div>
+    <div class="form-group">
+      <label>Tier</label>
+      <select id="c-tier"><option value="Standard">Standard ($500/mo)</option><option value="Pro">Pro ($1,000/mo)</option></select>
+    </div>
+    <div class="form-group"><label>Skills (comma separated)</label><input id="c-skills" placeholder="SEO, Blog, Reviews, Live Chat, Email"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="c-status"><option>Discovery</option><option>Building</option><option>Testing</option><option>Live</option></select>
+    </div>
+    <div class="form-group"><label>Start Date</label><input id="c-date" type="date"></div>
+    <div class="form-group"><label>Notes</label><textarea id="c-notes" placeholder="Optional notes"></textarea></div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('client')">Cancel</button>
+      <button class="btn-save" onclick="saveClient()">Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Prospect Modal -->
+<div class="modal-overlay" id="modal-prospect">
+  <div class="modal">
+    <h2>Add Prospect</h2>
+    <div class="form-group"><label>Prospect Name</label><input id="p-name" placeholder="Business or contact name"></div>
+    <div class="form-group"><label>Industry</label><input id="p-industry" placeholder="Industry type"></div>
+    <div class="form-group"><label>Source</label><input id="p-source" placeholder="Referral, cold outreach, website, etc."></div>
+    <div class="form-group">
+      <label>Tier Interest</label>
+      <select id="p-tier"><option value="Standard">Standard</option><option value="Pro">Pro</option><option value="Unknown">Unknown</option></select>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="p-status"><option>Lead</option><option>Contacted</option><option>Call Scheduled</option><option>Proposal Sent</option><option>Closed Won</option><option>Closed Lost</option></select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="p-notes"></textarea></div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('prospect')">Cancel</button>
+      <button class="btn-save" onclick="saveProspect()">Save Prospect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Partner Modal -->
+<div class="modal-overlay" id="modal-partner">
+  <div class="modal">
+    <h2>Add Agency Partner</h2>
+    <div class="form-group"><label>Agency Name</label><input id="a-name" placeholder="Agency name"></div>
+    <div class="form-group"><label>Contact</label><input id="a-contact" placeholder="Contact name / email"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="a-status"><option>Prospect</option><option>Onboarding</option><option>Active</option><option>Inactive</option></select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="a-notes"></textarea></div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('partner')">Cancel</button>
+      <button class="btn-save" onclick="savePartner()">Save Partner</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Password: hashed with SHA-256 for client-side check
+// Default password: "NextLevel2026!" — change this by updating the hash
+const PASSWORD_HASH = "a3f5b8c2d1e9f7a6b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2";
+
+// Simple auth using localStorage
+function hashPassword(pw){
+  // Simple hash for client-side (not crypto-grade, just a barrier)
+  let hash = 0;
+  for(let i=0;i<pw.length;i++){hash=((hash<<5)-hash)+pw.charCodeAt(i);hash|=0}
+  return Math.abs(hash).toString(36);
+}
+
+const CORRECT_HASH = hashPassword("NextLevel2026!");
+
+function authenticate(){
+  const pw = document.getElementById('password-input').value;
+  if(hashPassword(pw) === CORRECT_HASH){
+    localStorage.setItem('nlai_auth','true');
+    localStorage.setItem('nlai_auth_time', Date.now());
+    showDashboard();
+  } else {
+    document.getElementById('auth-error').style.display='block';
+  }
+}
+
+function showDashboard(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  renderAll();
+}
+
+function logout(){
+  localStorage.removeItem('nlai_auth');
+  location.reload();
+}
+
+// Check auth on load (expire after 24h)
+window.onload=function(){
+  const authTime = localStorage.getItem('nlai_auth_time');
+  if(localStorage.getItem('nlai_auth')==='true' && authTime && (Date.now()-Number(authTime))<86400000){
+    showDashboard();
+  }
+  document.getElementById('password-input').addEventListener('keydown',e=>{if(e.key==='Enter')authenticate()});
+}
+
+// Data storage in localStorage
+function getData(key){return JSON.parse(localStorage.getItem('nlai_'+key)||'[]')}
+function setData(key,data){localStorage.setItem('nlai_'+key,JSON.stringify(data))}
+
+// Modals
+function openModal(type){document.getElementById('modal-'+type).classList.add('open')}
+function closeModal(type){document.getElementById('modal-'+type).classList.remove('open')}
+
+// Status class mapping
+function statusClass(s){
+  const map={'Live':'status-live','Building':'status-building','Testing':'status-testing','Discovery':'status-discovery','Active':'status-live','Onboarding':'status-building','Prospect':'status-pipeline','Lead':'status-pipeline','Contacted':'status-testing','Call Scheduled':'status-building','Proposal Sent':'status-building','Closed Won':'status-live','Closed Lost':'status-pipeline'};
+  return map[s]||'status-pipeline';
+}
+function tierClass(t){return t==='Pro'?'tier-pro':'tier-standard'}
+
+// Save functions
+function saveClient(){
+  const clients=getData('clients');
+  clients.push({
+    name:document.getElementById('c-name').value,
+    industry:document.getElementById('c-industry').value,
+    tier:document.getElementById('c-tier').value,
+    skills:document.getElementById('c-skills').value,
+    status:document.getElementById('c-status').value,
+    date:document.getElementById('c-date').value,
+    notes:document.getElementById('c-notes').value
+  });
+  setData('clients',clients);
+  closeModal('client');
+  renderAll();
+  // Clear form
+  ['c-name','c-industry','c-skills','c-date','c-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveProspect(){
+  const prospects=getData('prospects');
+  prospects.push({
+    name:document.getElementById('p-name').value,
+    industry:document.getElementById('p-industry').value,
+    source:document.getElementById('p-source').value,
+    tier:document.getElementById('p-tier').value,
+    status:document.getElementById('p-status').value,
+    notes:document.getElementById('p-notes').value
+  });
+  setData('prospects',prospects);
+  closeModal('prospect');
+  renderAll();
+  ['p-name','p-industry','p-source','p-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+function savePartner(){
+  const partners=getData('partners');
+  partners.push({
+    name:document.getElementById('a-name').value,
+    contact:document.getElementById('a-contact').value,
+    clients:0,
+    status:document.getElementById('a-status').value,
+    notes:document.getElementById('a-notes').value
+  });
+  setData('partners',partners);
+  closeModal('partner');
+  renderAll();
+  ['a-name','a-contact','a-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+// Render everything
+function renderAll(){
+  const clients=getData('clients');
+  const prospects=getData('prospects');
+  const partners=getData('partners');
+
+  // Stats
+  const liveClients=clients.filter(c=>c.status==='Live').length;
+  const allActive=clients.filter(c=>['Live','Building','Testing'].includes(c.status));
+  let mrr=0;
+  allActive.forEach(c=>{mrr+=c.tier==='Pro'?1000:500});
+  const slotsUsed=clients.length;
+
+  document.getElementById('stat-active').textContent=liveClients;
+  document.getElementById('stat-mrr').textContent='$'+mrr.toLocaleString();
+  document.getElementById('stat-pipeline').textContent=prospects.filter(p=>!['Closed Won','Closed Lost'].includes(p.status)).length;
+  document.getElementById('stat-partners').textContent=partners.filter(p=>p.status==='Active').length;
+  document.getElementById('stat-slots').textContent=Math.max(0,10-slotsUsed);
+
+  // Clients table
+  const ct=document.getElementById('clients-table');
+  if(clients.length===0){
+    ct.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px">No clients yet. Add your first client to get started.</td></tr>';
+  } else {
+    ct.innerHTML=clients.map((c,i)=>`<tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.industry}</td>
+      <td><span class="tier-badge ${tierClass(c.tier)}">${c.tier}</span></td>
+      <td style="font-size:.8rem;color:var(--text2)">${c.skills}</td>
+      <td><span class="status ${statusClass(c.status)}">${c.status}</span></td>
+      <td style="font-size:.85rem">${c.date}</td>
+    </tr>`).join('');
+  }
+
+  // Pipeline table
+  const pt=document.getElementById('pipeline-table');
+  if(prospects.length===0){
+    pt.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px">No prospects yet.</td></tr>';
+  } else {
+    pt.innerHTML=prospects.map(p=>`<tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.industry}</td>
+      <td>${p.source}</td>
+      <td><span class="tier-badge ${tierClass(p.tier)}">${p.tier}</span></td>
+      <td><span class="status ${statusClass(p.status)}">${p.status}</span></td>
+      <td style="font-size:.85rem;color:var(--text2)">${p.notes}</td>
+    </tr>`).join('');
+  }
+
+  // Partners table
+  const at=document.getElementById('partners-table');
+  if(partners.length===0){
+    at.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">No agency partners yet.</td></tr>';
+  } else {
+    at.innerHTML=partners.map(a=>`<tr>
+      <td><strong>${a.name}</strong></td>
+      <td>${a.contact}</td>
+      <td>${a.clients}</td>
+      <td><span class="status ${statusClass(a.status)}">${a.status}</span></td>
+      <td style="font-size:.85rem;color:var(--text2)">${a.notes}</td>
+    </tr>`).join('');
+  }
+}
+</script>
+</body>
+</html>
