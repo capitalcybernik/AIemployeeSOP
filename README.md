@@ -30,6 +30,7 @@ Standard Operating Procedures for building, deploying, and managing AI Employees
 
 - [Client Onboarding Checklist](01-onboarding/checklist.md)
 - [Claude Max + OpenClaw Setup](02-build/claude-setup.md)
+- [Recommended ClawHub Skills](02-build/recommended-skills.md)
 - [Mission Control Setup](02-build/mission-control-setup.md)
 - [Tier 1 Build Guide](02-build/tier1-standard.md)
 - [Tier 2 Build Guide](02-build/tier2-pro.md)
